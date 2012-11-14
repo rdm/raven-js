@@ -16,7 +16,7 @@ full and minified distribution files include [parseUri][5].
 [4]: https://github.com/eriwen/javascript-stacktrace
 [5]: http://blog.stevenlevithan.com/archives/parseuri
 
-## Install
+## Install (standard)
 
 Download the latest version [here][5].
 
@@ -26,12 +26,20 @@ First include jQuery or Zepto in your document's head. Then include the
 minified distribution file from the 'dist' directory:
 
     <script type="text/javascript" src="js/jquery.js"></script>
-    <script type="text/javascript" src="js/raven-0.5.3.min.js"></script>
+    <script type="text/javascript" src="js/raven-0.6.min.js"></script>
 
 [5]: https://github.com/downloads/lincolnloop/raven-js/raven-js-0.6.tar.gz
 [6]: http://jquery.com/
 [7]: http://zeptojs.com/
 
+
+## Install (requirejs)
+
+put raven-0.6.amd.js wherever require would load it from.
+
+Since require needs to have an unambiguous label to refer to jQuery or Zepto, the default is to use 'jquery'.  If that is not appropriate, you can either manually edit this label or use make to build a variant, for example:
+
+    ENDER=Zepto make raven-amd
 
 ## Configuration
 
