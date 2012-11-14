@@ -6,20 +6,24 @@
 //     * Either jQuery (>1.5) or Zepto.js (>0.8).
 //     * parseUri (included in the full and minified distribution files)
 
-(function(){
-    // Save a reference to the global object (`window` in the browser, `global`
-    // on the server).
-    var root = this;
+(function(root){
+    //
+    // this supplies jQuery or whatever and gets a Raven property
+    //    non-amd this: root (see below)
+    //    amd this: an arbitrary local object
+    //
+    // root supplies the location property
+    //    browser root: window object
+    //    server root: anonymous global object
+    //
 
-    var Raven;
-    root.Raven = Raven = {};
-
-    var self = Raven;
+    var Raven= {};
+    this.Raven= Raven;
 
     Raven.VERSION = '@VERSION';
 
     // jQuery, Zepto, or Ender owns the `$` variable.
-    var $ = root.jQuery || root.Zepto || root.ender;
+    var $ = this.jQuery || this.Zepto || this.ender;
 
     Raven.loaded = false;
     Raven.options = {
@@ -51,18 +55,18 @@
         }
 
         $.each(config, function(key, option) {
-            self.options[key] = option;
+            Raven.options[key] = option;
         });
 
         // Expand server base URLs into API URLs
-        $.each(self.options['servers'], function(i, server) {
+        $.each(Raven.options['servers'], function(i, server) {
             // Add a trailing slash if one isn't provided
             if (server.slice(-1) !== '/') {
                 server += '/';
             }
-            servers.push(server + 'api/' + self.options['projectId'] + '/store/');
+            servers.push(server + 'api/' + Raven.options['projectId'] + '/store/');
         });
-        self.options['servers'] = servers;
+        Raven.options['servers'] = servers;
 
     };
 
@@ -91,7 +95,7 @@
     Raven.getHeaders = function() {
         var headers = {};
 
-        if (self.options.fetchHeaders && !self.options.testMode) {
+        if (Raven.options.fetchHeaders && !Raven.options.testMode) {
             headers = $.ajax({type: 'HEAD', url: root.location, async: false})
                        .getAllResponseHeaders();
         }
@@ -115,8 +119,8 @@
     };
 
     Raven.getSignature = function(message, timestamp, callback) {
-        if (self.options.signatureUrl) {
-            $.post(self.options.signatureUrl, {
+        if (Raven.options.signatureUrl) {
+            $.post(Raven.options.signatureUrl, {
                 message: message, timestamp: timestamp
             }, function(data) {
                 callback(data.signature);
@@ -129,9 +133,9 @@
     Raven.getAuthHeader = function(signature, timestamp) {
         var header = "Sentry sentry_version=2.0, ";
         header += "sentry_timestamp=" + timestamp + ", ";
-        header += "sentry_client=raven-js/" + self.VERSION;
-        if (self.options.publicKey) {
-            header += ", sentry_key=" + self.options.publicKey;
+        header += "sentry_client=raven-js/" + Raven.VERSION;
+        if (Raven.options.publicKey) {
+            header += ", sentry_key=" + Raven.options.publicKey;
         }
         if (signature) {
             header += ", sentry_signature=" + signature;
@@ -168,11 +172,11 @@
             traceback = traceback.concat(this.otherTraceback(arguments.callee));
         }
 
-        self.process(e, fileurl, lineno, traceback);
+        Raven.process(e, fileurl, lineno, traceback);
     };
 
     Raven.captureMessage = function(msg) {
-        self.process(msg);
+        Raven.process(msg);
     };
 
     Raven.trimString = function(str) {
@@ -362,12 +366,12 @@
             type = message.name;
             message = message.message;
         }
-        if ($.inArray(message, self.options.ignoreErrors) >= 0) {
+        if ($.inArray(message, Raven.options.ignoreErrors) >= 0) {
             return;
         }
 
-        for (var i = 0; i < self.options.ignoreUrls.length; i++) {
-            if (self.options.ignoreUrls[i].test(fileurl)) {
+        for (var i = 0; i < Raven.options.ignoreUrls.length; i++) {
+            if (Raven.options.ignoreUrls[i].test(fileurl)) {
                 return;
             }
         }
@@ -394,22 +398,22 @@
                 "type": type,
                 "value": message
             },
-            "project": self.options.projectId,
-            "logger": self.options.logger,
-            "site": self.options.site
+            "project": Raven.options.projectId,
+            "logger": Raven.options.logger,
+            "site": Raven.options.site
         };
 
         data["sentry.interfaces.Http"] = {
             "url": url,
             "querystring": querystring,
-            "headers": self.getHeaders()
+            "headers": Raven.getHeaders()
         };
 
         timestamp = timestamp || (new Date()).getTime();
         encoded_msg = JSON.stringify(data);
-        self.getSignature(encoded_msg, timestamp, function(signature) {
-            var header = self.getAuthHeader(signature, timestamp);
-            $.each(self.options.servers, function (i, server) {
+        Raven.getSignature(encoded_msg, timestamp, function(signature) {
+            var header = Raven.getAuthHeader(signature, timestamp);
+            $.each(Raven.options.servers, function (i, server) {
                 $.ajax({
                     type: 'POST',
                     url: server,
